@@ -26,7 +26,7 @@ class ViggleTurboSigmas:
         return {
             "required": {
                 "latent": ("LATENT", {"tooltip": "The latent passed to the sampler; its size sets the resolution shift."}),
-                "nodes": ("STRING", {"default": "1.0, 0.9375, 0.875, 0.75, 0.5, 0.25",
+                "values": ("STRING", {"default": "1.0, 0.9375, 0.875, 0.75, 0.5, 0.25",
                                      "tooltip": "Raw (unshifted) student nodes. v0.2.1 LoRA: 1.0, 0.9375, 0.875, 0.75, 0.5, 0.25 (6 steps). Add or remove steps at the high-noise end only (5: 1.0, 0.875, ...; 7: 1.0, 0.9583, 0.9167, 0.875, ...); keep 0.875, 0.75, 0.5, 0.25."}),
             }
         }
@@ -35,12 +35,12 @@ class ViggleTurboSigmas:
     FUNCTION = "get_sigmas"
     CATEGORY = "sampling/custom_sampling/schedulers"
 
-    def get_sigmas(self, latent, nodes):
+    def get_sigmas(self, latent, values):
         s = latent["samples"]
         r = latent.get("downscale_ratio_spacial", 16) / 16   # EmptyLatentImage is /8, the sampler resizes it to /16
         tokens = round(s.shape[-2] * r) * round(s.shape[-1] * r)
         mu = 0.5 + (0.9 - 0.5) * (tokens - 256) / (8192 - 256)
-        t = torch.tensor([float(x) for x in nodes.split(",")], dtype=torch.float64)
+        t = torch.tensor([float(x) for x in values.split(",")], dtype=torch.float64)
         sigmas = math.exp(mu) / (math.exp(mu) + (1 / t - 1))
         return (torch.cat([sigmas, sigmas.new_zeros(1)]).float(),)
 
